@@ -12,6 +12,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const TEMPLATES = ['template'];
 
 async function main() {
+  let tempTemplatePath; // Declare variable to hold the temporary path
   try {
     console.log("");
     console.log("🛠️  Create LittleJS js13k game");
@@ -27,24 +28,16 @@ async function main() {
           if (!input.trim()) {
             return 'Project name cannot be empty';
           }
-          // Check for invalid characters that could cause filesystem issues
           if (!/^[a-zA-Z0-9\s\-_]+$/.test(input)) {
             return 'Project name can only contain letters, numbers, spaces, hyphens, and underscores';
           }
           return true;
         }
       },
-      // {
-      //   type: 'list',
-      //   name: 'template',
-      //   message: 'Choose a template:',
-      //   choices: TEMPLATES,
-      // },
     ]);
 
     const targetDir = path.join(process.cwd(), projectName);
     
-    // Normalize project name for package.json (lowercase, replace spaces with hyphens)
     const packageName = projectName.toLowerCase().replace(/\s+/g, '-');
 
     if (fs.existsSync(targetDir)) {
@@ -52,15 +45,10 @@ async function main() {
       process.exit(1);
     }
 
-    // Resolve template path relative to script location
-    const templatePath = path.join(__dirname, 'template');
-
-    // if (!fs.existsSync(templatePath)) {
-    //   console.error(`❌ Template directory not found: ${templatePath}`);
-    //   process.exit(1);
-    // }
-
     console.log("📂 Creating project directory...");
+    
+    // Define a temporary path to clone the template into
+    tempTemplatePath = path.join(process.cwd(), '.temp-template-clone');
 
     const emitter = degit('eoinmcg/js13k-littlejs-starter', {
       cache: false,
@@ -68,18 +56,19 @@ async function main() {
       verbose: true,
     });
 
-    await emitter.clone('template'); // downloads into ./template
+    // Clone the repo into our temporary, known path
+    await emitter.clone(tempTemplatePath);
 
-     // Copy template files
-     fs.copySync(templatePath, targetDir);
-    // remove old template directory
-    fs.removeSync(templatePath);
+    // Now, copy from the temporary path to the final project directory
+    fs.copySync(tempTemplatePath, targetDir);
+
+    // Clean up the temporary directory
+    fs.removeSync(tempTemplatePath);
 
     // Update README.md (removes the Quickstart section)
     const readmePath = path.join(targetDir, 'README.md');
-
     if (!fs.existsSync(readmePath)) {
-      console.warn("⚠️  No  README..md found in template, skipping  REAADME.md updates");
+      console.warn("⚠️  No README.md found in template, skipping README.md updates");
     } else {
       console.log("📝 Updating README.md...");
       let readme = fs.readFileSync(readmePath, 'utf8');
@@ -100,14 +89,11 @@ async function main() {
       const packageJson = fs.readJsonSync(packageJsonPath);
       packageJson.name = packageName;
 
-      // Add Windows-specific dependency
       if (process.platform === 'win32') {
         console.log("🪟 Adding Windows-specific dependencies...");
-        // Ensure devDependencies exists
         if (!packageJson.devDependencies) {
           packageJson.devDependencies = {};
         }
-        // Add the new dependency to existing devDependencies
         packageJson.devDependencies['ect-bin'] = '^1.4.1';
       }
 
@@ -119,7 +105,6 @@ async function main() {
     if (fs.existsSync(dataJsPath)) {
       console.log("🎮 Updating game title...");
       let dataJsContent = fs.readFileSync(dataJsPath, 'utf8');
-      // This assumes there's a title field to replace - adjust the regex based on your actual file structure
       dataJsContent = dataJsContent.replace(/(title\s*[:=]\s*['"`]).*?(['"`])/g, `$1${projectName}$2`);
       fs.writeFileSync(dataJsPath, dataJsContent);
     }
@@ -131,25 +116,28 @@ async function main() {
     console.log("");
     console.log("📦 Installing dependencies...");
     
-    // Change to target directory and install dependencies
     process.chdir(targetDir);
     child_process.execSync('npm install', { stdio: 'inherit' });
     
     console.log("");
     console.log("Next steps:");
     console.log(`  cd ${projectName}`);
-    console.log("  npm run dev     # Start development server");
-    console.log("  npm run build   # Build for production");
-    console.log("  npm run zip     # Create a zip");
+    console.log("  npm run dev      # Start development server");
+    console.log("  npm run build    # Build for production");
+    console.log("  npm run zip      # Create a zip");
     console.log("");
     console.log("More instructions in README.md");
     console.log("");
-    console.log(chalk.green.bold(`Now go make something awesome!`)); // Fixed typo: removed extra backslash
+    console.log(chalk.green.bold(`Now go make something awesome!`));
     console.log("");
     
   } catch (error) {
     console.error("❌ An error occurred:");
     console.error(error.message);
+    // Ensure cleanup even on error
+    if (tempTemplatePath && fs.existsSync(tempTemplatePath)) {
+      fs.removeSync(tempTemplatePath);
+    }
     process.exit(1);
   }
 }

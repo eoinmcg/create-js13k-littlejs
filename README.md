@@ -44,6 +44,8 @@ with a pre-configured LittleJS game.
 Once your project is created and dependencies are installed, navigate to your
 new project directory and use these commands:
 
+* In game: [alt] + [g] to create an animated gif of your game.
+
 * `npm run dev`: Starts the development server with live-reloading. This
 streamlines development allowing you to focus on building an awesome game.
 
@@ -56,8 +58,6 @@ final, compressed game, ready for submission to js13kGames.
 * `npm run deploy`: Publishes to github pages, allowing you to share your game.
 Note: You must host your project on github for this. Further details can be found
 found in your poject's `README.md`.
-
-* In game: [alt] + [g] to create an animated gif of your game.
 
 Contributing
 ------------

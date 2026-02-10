@@ -1,143 +1,169 @@
 #!/usr/bin/env node
+import degit from "degit";
+import chalk from "chalk";
+import inquirer from "inquirer";
+import fs from "fs-extra";
+import path from "path";
+import child_process from "child_process";
 
-import degit from 'degit';
-import chalk from 'chalk';
-import inquirer from 'inquirer';
-import fs from 'fs-extra';
-import path from 'path';
-import child_process from 'child_process';
-import { fileURLToPath } from 'url';
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const TEMPLATES = ['template'];
+const banner = `
+${chalk.yellow("--------------------------------------------")}
+ ${chalk.cyan.bold(" CREATE LITTLEJS GAME ")}
+${chalk.yellow("--------------------------------------------")}
+`;
 
 async function main() {
-  let tempTemplatePath; // Declare variable to hold the temporary path
+  let tempTemplatePath;
   try {
-    console.log("");
-    console.log("🛠️  Create LittleJS js13k game");
-    console.log("");
+    console.log(banner);
 
-    const { projectName } = await inquirer.prompt([
-      {
-        type: 'input',
-        name: 'projectName',
-        message: 'Project name:',
-        default: 'my-game',
-        validate: (input) => {
-          if (!input.trim()) {
-            return 'Project name cannot be empty';
-          }
-          if (!/^[a-zA-Z0-9\s\-_]+$/.test(input)) {
-            return 'Project name can only contain letters, numbers, spaces, hyphens, and underscores';
-          }
-          return true;
-        }
-      },
-    ]);
+    const { projectName, template, includeAI, runInstall } =
+      await inquirer.prompt([
+        {
+          type: "input",
+          name: "projectName",
+          message: "Project name:",
+          default: "my-game",
+          validate: (input) =>
+            /^[a-zA-Z0-9\s\-_]+$/.test(input) || "Invalid name",
+        },
+        {
+          type: "list",
+          name: "template",
+          message: "Select your workflow:",
+          choices: [
+            { name: "Vanilla (Global Scope)", value: "vanilla" },
+            { name: "Modular (ES Modules)", value: "modular" },
+            { name: "TypeScript (Typed Global)", value: "typescript" },
+          ],
+        },
+        {
+          type: "confirm",
+          name: "includeAI",
+          message: "Include AI helper context files?",
+          default: true,
+        },
+        {
+          type: "confirm",
+          name: "runInstall",
+          message: "Install dependencies and finalize?",
+          default: true,
+        },
+      ]);
 
     const targetDir = path.join(process.cwd(), projectName);
-    
-    const packageName = projectName.toLowerCase().replace(/\s+/g, '-');
+    const packageName = projectName.toLowerCase().replace(/\s+/g, "-");
 
     if (fs.existsSync(targetDir)) {
-      console.error(`❌ Directory ${projectName} already exists`);
+      console.error(chalk.red(`❌ Directory ${projectName} already exists`));
       process.exit(1);
     }
 
-    console.log("📂 Creating project directory...");
-    
-    // Define a temporary path to clone the template into
-    tempTemplatePath = path.join(process.cwd(), '.temp-template-clone');
-
-    const emitter = degit('eoinmcg/js13k-littlejs-starter', {
+    console.log(chalk.blue("\n📂 Downloading core assets..."));
+    tempTemplatePath = path.join(process.cwd(), ".temp-template-clone");
+    const emitter = degit("eoinmcg/js13k-littlejs-starter#dev", {
       cache: false,
       force: true,
-      verbose: true,
     });
-
-    // Clone the repo into our temporary, known path
     await emitter.clone(tempTemplatePath);
 
-    // Now, copy from the temporary path to the final project directory
-    fs.copySync(tempTemplatePath, targetDir);
+    // EXTRACT & CLEANUP
+    console.log(chalk.blue(`🏗️  Building ${template} environment...`));
+    const templateSubPath = path.join(tempTemplatePath, "templates", template);
 
-    // Clean up the temporary directory
+    fs.copySync(tempTemplatePath, targetDir, {
+      filter: (src) => !src.includes(path.join(tempTemplatePath, "templates")),
+    });
+
+    if (fs.existsSync(templateSubPath)) {
+      fs.copySync(templateSubPath, targetDir);
+    }
+
+    if (includeAI) {
+      // The source is the shared file in the temporary clone
+      const aiSource = path.join(
+        tempTemplatePath,
+        "templates",
+        "ai-context.md",
+      );
+      // The destination is the user's new src folder
+      const aiDest = path.join(targetDir, "src", "ai-context.md");
+
+      if (fs.existsSync(aiSource)) {
+        console.log(chalk.blue("🤖 Adding AI context helper..."));
+        fs.copySync(aiSource, aiDest);
+      }
+    }
+
+    // FIX PATHS IN INDEX.HTML
+    const indexPath = path.join(targetDir, "index.html");
+    if (fs.existsSync(indexPath)) {
+      let indexContent = fs.readFileSync(indexPath, "utf8");
+      indexContent = indexContent.replace(
+        /\.\.\/\.\.\/littlejs\//g,
+        "./littlejs/",
+      );
+      fs.writeFileSync(indexPath, indexContent);
+    }
+
+    // UPDATE PACKAGE.JSON
+    const pkg = fs.readJsonSync(path.join(targetDir, "package.json"));
+    pkg.name = packageName;
+    pkg.littlejsMode = template;
+
+    if (template === "typescript") {
+      pkg.scripts.build = "tsc && vite build";
+      pkg.scripts.zip = "tsc && vite build && node scripts/build.js";
+      pkg.devDependencies.typescript = "^5.0.0";
+      pkg.devDependencies["@types/node"] = "^20.0.0";
+
+      // Repair TSConfig
+      const tsConfigPath = path.join(targetDir, "tsconfig.json");
+      if (fs.existsSync(tsConfigPath)) {
+        let tsConfig = fs.readJsonSync(tsConfigPath);
+        const fix = (p) => p.replace("../../", "./");
+        if (tsConfig.compilerOptions?.paths) {
+          Object.keys(tsConfig.compilerOptions.paths).forEach((k) => {
+            tsConfig.compilerOptions.paths[k] =
+              tsConfig.compilerOptions.paths[k].map(fix);
+          });
+        }
+        if (tsConfig.include) tsConfig.include = tsConfig.include.map(fix);
+        fs.writeJsonSync(tsConfigPath, tsConfig, { spaces: 2 });
+      }
+    }
+
+    fs.writeJsonSync(path.join(targetDir, "package.json"), pkg, { spaces: 2 });
+
+    if (!includeAI) fs.removeSync(path.join(targetDir, "context"));
     fs.removeSync(tempTemplatePath);
 
-    // Update README.md (removes the Quickstart section)
-    const readmePath = path.join(targetDir, 'README.md');
-    if (!fs.existsSync(readmePath)) {
-      console.warn("⚠️  No README.md found in template, skipping README.md updates");
+    if (runInstall) {
+      console.log(chalk.yellow("📦 Installing dependencies..."));
+      child_process.execSync("npm install", {
+        cwd: targetDir,
+        stdio: "inherit",
+      });
+    }
+
+    console.log(
+      chalk.green(`\n✨ Success! Created ${projectName} at ${targetDir}`),
+    );
+
+    console.log(`  ${chalk.white("Step 1:")} cd ${projectName}`);
+
+    if (!runInstall) {
+      console.log(`  ${chalk.white("Step 2:")} npm install`);
+      console.log(`  ${chalk.white("Step 3:")} npm run dev`);
     } else {
-      console.log("📝 Updating README.md...");
-      let readme = fs.readFileSync(readmePath, 'utf8');
-      readme = readme.replace(
-        /\*\s\*\s\*\n+## \*\*Quick Start\*\*[\s\S]*?\n\*\s\*\s\*/g,
-        ''
-      );
-      fs.writeFileSync(readmePath, readme);
+      console.log(`  ${chalk.white("Step 2:")} npm run dev`);
     }
 
-    // Update package.json
-    const packageJsonPath = path.join(targetDir, 'package.json');
-    
-    if (!fs.existsSync(packageJsonPath)) {
-      console.warn("⚠️  No package.json found in template, skipping package.json updates");
-    } else {
-      console.log("📝 Updating package.json...");
-      const packageJson = fs.readJsonSync(packageJsonPath);
-      packageJson.name = packageName;
-
-      if (process.platform === 'win32') {
-        console.log("🪟 Adding Windows-specific dependencies...");
-        if (!packageJson.devDependencies) {
-          packageJson.devDependencies = {};
-        }
-        packageJson.devDependencies['ect-bin'] = '^1.4.1';
-      }
-
-      fs.writeJsonSync(packageJsonPath, packageJson, { spaces: 2 });
-    }
-
-    // Update src/data.js title
-    const dataJsPath = path.join(targetDir, 'src', 'data.js');
-    if (fs.existsSync(dataJsPath)) {
-      console.log("🎮 Updating game title...");
-      let dataJsContent = fs.readFileSync(dataJsPath, 'utf8');
-      dataJsContent = dataJsContent.replace(/(title\s*[:=]\s*['"`]).*?(['"`])/g, `$1${projectName}$2`);
-      fs.writeFileSync(dataJsPath, dataJsContent);
-    }
-
-    console.log("");
-    console.log("--------------------------------");
-    console.log(`✅ Project created at ${targetDir}`);
-    console.log("--------------------------------");
-    console.log("");
-    console.log("📦 Installing dependencies...");
-    
-    process.chdir(targetDir);
-    child_process.execSync('npm install', { stdio: 'inherit' });
-    
-    console.log("");
-    console.log("Next steps:");
-    console.log(`  cd ${projectName}`);
-    console.log("  npm run dev      # Start development server");
-    console.log("  npm run build    # Build for production");
-    console.log("  npm run zip      # Create a zip");
-    console.log("");
-    console.log("More instructions in README.md");
-    console.log("");
-    console.log(chalk.green.bold(`Now go make something awesome!`));
-    console.log("");
-    
+    process.exit(0);
   } catch (error) {
-    console.error("❌ An error occurred:");
-    console.error(error.message);
-    // Ensure cleanup even on error
-    if (tempTemplatePath && fs.existsSync(tempTemplatePath)) {
+    console.error(chalk.red("\n❌ Error:"), error.message);
+    if (tempTemplatePath && fs.existsSync(tempTemplatePath))
       fs.removeSync(tempTemplatePath);
-    }
     process.exit(1);
   }
 }

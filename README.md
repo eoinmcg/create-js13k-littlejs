@@ -1,7 +1,7 @@
 # create-js13k-littlejs
 
 A project generator for [LittleJS](https://github.com/KilledByAPixel/LittleJS), the lightweight and powerful 2D engine by Frank Force.
-Let's get you up and running for the [js13kGames](https://js13kgames.com/) competition.
+Gets you up and running for the [js13kGames](https://js13kgames.com/) competition.
 
 This package clones a starter template, configures it with your
 project name, and installs all the necessary dependencies

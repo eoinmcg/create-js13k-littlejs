@@ -4,6 +4,10 @@
   "description": "A simple CLI tool to create a new project templates for LittleJs games.",
   "type": "module",
   "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/eoinmcg/create-js13k-littlejs.git"
+  },
   "bin": {
     "create-js13k-littlejs": "index.js"
   },

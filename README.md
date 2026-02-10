@@ -1,11 +1,11 @@
 # create-js13k-littlejs
 
-A CLI tool for quickly scaffolding a new [LittleJS](https://github.com/KilledByAPixel/LittleJS)
-game project for the [js13kGames](https://js13kgames.com/) competition.
+A project generator for [LittleJS](https://github.com/KilledByAPixel/LittleJS), the lightweight and powerful 2D engine by Frank Force.
+Let's get you up and running for the [js13kGames](https://js13kgames.com/) competition.
 
 This package clones a starter template, configures it with your
-project name, and installs all the necessary dependencies to get
-you up and running in quick smart.
+project name, and installs all the necessary dependencies
+so you can concentrate on making something awesome.
 
 ## ⚡️ Features
 
@@ -49,7 +49,7 @@ new project directory and use these commands:
 
 - `npm run deploy`: Publishes to github pages, allowing you to share your game.
   Note: You must host your project on github for this. Further details can be found
-  found in your poject's `README.md`.
+  found in your project's `README.md`.
 
 ## Contributing
 

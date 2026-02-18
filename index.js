@@ -5,8 +5,15 @@ import figlet from "figlet";
 import gradient from "gradient-string";
 import inquirer from "inquirer";
 import fs from "fs-extra";
-import path from "path";
+import path, { join } from "path";
 import child_process from "child_process";
+import { readFileSync } from "fs";
+
+import { fileURLToPath } from "url";
+import { dirname } from "path";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const pkg = JSON.parse(readFileSync(join(__dirname, "package.json"), "utf8"));
 

@@ -13,7 +13,7 @@ To create a new game, simply run the following command and follow the prompts:
 
 Bash
 
-    npm create js13k-littlejs
+    npm create js13k-littlejs@latest
 
 This will guide you through naming your project and will set up a new directory
 with a pre-configured LittleJS game.

@@ -1,21 +1,30 @@
 #!/usr/bin/env node
 import degit from "degit";
 import chalk from "chalk";
+import figlet from "figlet";
+import gradient from "gradient-string";
 import inquirer from "inquirer";
 import fs from "fs-extra";
 import path from "path";
 import child_process from "child_process";
 
-const banner = `
-${chalk.yellow("--------------------------------------------")}
- ${chalk.cyan.bold(" CREATE LITTLEJS GAME ")}
-${chalk.yellow("--------------------------------------------")}
-`;
+const pkg = JSON.parse(fs.readFileSync("./package.json", "utf8"));
+
+function showBanner() {
+  const banner = figlet.textSync("create LittleJS", { font: "Slant" });
+  console.log();
+  console.log(gradient.pastel.multiline(banner));
+  console.log(chalk.gray(pkg.version));
+  console.log();
+  console.log('Batteries included starter template for JS13k jam using the LittleJS game engine.');
+  console.log('---------------------------------------------------------------------------------');
+  console.log();
+}
 
 async function main() {
   let tempTemplatePath;
   try {
-    console.log(banner);
+    showBanner();
 
     const { projectName, template, includeAI, runInstall } =
       await inquirer.prompt([
@@ -68,7 +77,7 @@ async function main() {
     await emitter.clone(tempTemplatePath);
 
     // EXTRACT & CLEANUP
-    console.log(chalk.blue(`🏗️  Building ${template} environment...`));
+    console.log(chalk.blue(`🏗️ Building ${template} environment...`));
     const templateSubPath = path.join(tempTemplatePath, "templates", template);
 
     fs.copySync(tempTemplatePath, targetDir, {
@@ -110,6 +119,7 @@ async function main() {
     const pkg = fs.readJsonSync(path.join(targetDir, "package.json"));
     pkg.name = packageName;
     pkg.littlejsMode = template;
+    delete pkg.scripts.sync;
 
     if (template === "typescript") {
       pkg.scripts.build = "tsc && vite build";
@@ -158,6 +168,7 @@ async function main() {
     } else {
       console.log(`  ${chalk.white("Step 2:")} npm run dev`);
     }
+    console.log(`  ${chalk.bgMagenta("Now go make something awesome!")}`);
 
     process.exit(0);
   } catch (error) {

@@ -7,6 +7,18 @@ This package clones a starter template, configures it with your
 project name, and installs all the necessary dependencies
 so you can concentrate on making something awesome.
 
+## 🏁 Quick Start
+
+To create a new game, simply run the following command and follow the prompts:
+
+Bash
+
+    npm create js13k-littlejs
+
+This will guide you through naming your project and will set up a new directory
+with a pre-configured LittleJS game.
+
+
 ## ⚡️ Features
 
 - 🛠️ **Quick Setup:** A single command creates a new project with
@@ -21,17 +33,6 @@ so you can concentrate on making something awesome.
 
 - 💻 **Platform-Specific Dependencies:** Handles platform-specific dependencies,
   such as adding `ect-bin` for Windows users to ensure zipping works correctly.
-
-## 🏁 Quick Start
-
-To create a new game, simply run the following command and follow the prompts:
-
-Bash
-
-    npm create js13k-littlejs
-
-This will guide you through naming your project and will set up a new directory
-with a pre-configured LittleJS game.
 
 ## ⌨️ Available Commands
 

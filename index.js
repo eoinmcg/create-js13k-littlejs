@@ -8,7 +8,7 @@ import fs from "fs-extra";
 import path from "path";
 import child_process from "child_process";
 
-const pkg = JSON.parse(fs.readFileSync("./package.json", "utf8"));
+const pkg = JSON.parse(readFileSync(join(__dirname, "package.json"), "utf8"));
 
 function showBanner() {
   const banner = figlet.textSync("create LittleJS", { font: "Slant" });

@@ -2,6 +2,7 @@
 import degit from "degit";
 import chalk from "chalk";
 import figlet from "figlet";
+import cfonts from "cfonts";
 import gradient from "gradient-string";
 import inquirer from "inquirer";
 import fs from "fs-extra";
@@ -17,21 +18,26 @@ const __dirname = dirname(__filename);
 
 const pkg = JSON.parse(readFileSync(join(__dirname, "package.json"), "utf8"));
 
-function showBanner() {
-  const banner = figlet.textSync("create LittleJS", { font: "Slant" });
+function showBanner(variation = 0) {
+  const banner = figlet.textSync("create LittleJS", { font: "Big" });
   console.log();
-  console.log(gradient.pastel.multiline(banner));
+  if (variation === 0) {
+    console.log(gradient.pastel.multiline(banner));
+  } else if (variation === 1) {
+    cfonts.say("   js13k \nLittleJS", { font: "block", colors: ["yellow", "red", "blue"] });
+  }
+
   console.log(chalk.gray(pkg.version));
   console.log();
-  console.log('Batteries included starter template for JS13k jam using the LittleJS game engine.');
-  console.log('---------------------------------------------------------------------------------');
+  console.log(chalk.yellow('Batteries included starter template for JS13k jam using the LittleJS game engine.'));
+  console.log(chalk.gray('-----------------------------------------------------------------------'));
   console.log();
 }
 
 async function main() {
   let tempTemplatePath;
   try {
-    showBanner();
+    showBanner(1);
 
     const { projectName, template, includeAI, runInstall } =
       await inquirer.prompt([
@@ -120,6 +126,16 @@ async function main() {
         "./littlejs/",
       );
       fs.writeFileSync(indexPath, indexContent);
+    }
+
+    // FIX TILE PATHS IN ./src/data.json
+    const dataPath = path.join(targetDir, "src/data.json");
+    if (fs.existsSync(dataPath)) {
+      const dataContent = JSON.parse(fs.readFileSync(dataPath, "utf8"));
+      if (Array.isArray(dataContent.tiles)) {
+        dataContent.tiles = dataContent.tiles.map((tile) => tile.replace(/^\//, ""));
+      }
+      fs.writeJsonSync(dataPath, dataContent, { spaces: 2 });
     }
 
     // UPDATE PACKAGE.JSON

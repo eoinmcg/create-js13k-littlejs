@@ -1,3 +1,4 @@
+
 #!/usr/bin/env node
 import degit from "degit";
 import chalk from "chalk";
@@ -62,7 +63,7 @@ async function main() {
         {
           type: "confirm",
           name: "includeAI",
-          message: "Include AI helper context files?",
+          message: "Include AGENTS.md for AI coding assistants?",
           default: true,
         },
         {
@@ -101,19 +102,18 @@ async function main() {
       fs.copySync(templateSubPath, targetDir);
     }
 
-    if (includeAI) {
-      // The source is the shared file in the temporary clone
-      const aiSource = path.join(
-        tempTemplatePath,
-        "templates",
-        "ai-context.md",
-      );
-      // The destination is the user's new src folder
-      const aiDest = path.join(targetDir, "src", "ai-context.md");
+    const agentsSource = path.join(tempTemplatePath, "AGENTS.md",);
+    const agentsDest = path.join(targetDir, "AGENTS.md",);
 
-      if (fs.existsSync(aiSource)) {
-        console.log(chalk.blue("🤖 Adding AI context helper..."));
-        fs.copySync(aiSource, aiDest);
+    if (includeAI) {
+      if (fs.existsSync(agentsSource)) {
+        console.log(chalk.blue("🤖 Adding AGENTS.md AI context helper..."));
+        fs.copySync(agentsSource, agentsDest);
+      }
+    } else {
+      // Remove AGENTS.md from root if user opted out
+      if (fs.existsSync(agentsDest)) {
+        fs.removeSync(agentsDest);
       }
     }
 

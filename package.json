@@ -1,8 +1,14 @@
 {
   "name": "create-js13k-littlejs",
-  "version": "1.0.9",
+  "version": "1.0.10",
   "description": "A simple CLI tool to create a new project templates for LittleJs games.",
-  "keywords": ["littlejs", "js13k", "gamedev", "starter", "template"],
+  "keywords": [
+    "littlejs",
+    "js13k",
+    "gamedev",
+    "starter",
+    "template"
+  ],
   "type": "module",
   "main": "index.js",
   "repository": {

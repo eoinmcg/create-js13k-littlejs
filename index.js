@@ -1,5 +1,5 @@
-
 #!/usr/bin/env node
+
 import degit from "degit";
 import chalk from "chalk";
 import figlet from "figlet";
@@ -84,7 +84,7 @@ async function main() {
 
     console.log(chalk.blue("\n📂 Downloading core assets..."));
     tempTemplatePath = path.join(process.cwd(), ".temp-template-clone");
-    const emitter = degit("eoinmcg/js13k-littlejs-starter#dev", {
+    const emitter = degit("eoinmcg/js13k-littlejs-starter", {
       cache: false,
       force: true,
     });
@@ -99,22 +99,23 @@ async function main() {
     });
 
     if (fs.existsSync(templateSubPath)) {
-      fs.copySync(templateSubPath, targetDir);
+      fs.copySync(templateSubPath, targetDir, { overwrite: true });
     }
 
-    const agentsSource = path.join(tempTemplatePath, "AGENTS.md",);
-    const agentsDest = path.join(targetDir, "AGENTS.md",);
+    // Handle AGENTS.md and AI context
+    const agentsDest = path.join(targetDir, "AGENTS.md");
+    const contextDest = path.join(targetDir, "context");
 
     if (includeAI) {
-      if (fs.existsSync(agentsSource)) {
-        console.log(chalk.blue("🤖 Adding AGENTS.md AI context helper..."));
-        fs.copySync(agentsSource, agentsDest);
+      if (fs.existsSync(agentsDest)) {
+        console.log(chalk.blue("🤖 AGENTS.md AI context helper included."));
+      } else {
+        console.log(chalk.yellow("⚠️ Note: AGENTS.md was not found in the source template repo."));
       }
     } else {
-      // Remove AGENTS.md from root if user opted out
-      if (fs.existsSync(agentsDest)) {
-        fs.removeSync(agentsDest);
-      }
+      console.log(chalk.gray("🧹 Removing AI context files..."));
+      if (fs.existsSync(agentsDest)) fs.removeSync(agentsDest);
+      if (fs.existsSync(contextDest)) fs.removeSync(contextDest);
     }
 
     // FIX PATHS IN INDEX.HTML

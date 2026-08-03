@@ -84,7 +84,7 @@ async function main() {
 
     console.log(chalk.blue("\n📂 Downloading core assets..."));
     tempTemplatePath = path.join(process.cwd(), ".temp-template-clone");
-    const emitter = degit("eoinmcg/js13k-littlejs-starter", {
+    const emitter = degit("eoinmcg/js13k-littlejs-starter#dev", {
       cache: false,
       force: true,
     });

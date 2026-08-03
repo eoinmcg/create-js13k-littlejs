@@ -2,9 +2,7 @@
 
 import degit from "degit";
 import chalk from "chalk";
-import figlet from "figlet";
 import cfonts from "cfonts";
-import gradient from "gradient-string";
 import inquirer from "inquirer";
 import fs from "fs-extra";
 import path, { join } from "path";
@@ -19,18 +17,23 @@ const __dirname = dirname(__filename);
 
 const pkg = JSON.parse(readFileSync(join(__dirname, "package.json"), "utf8"));
 
-function showBanner(variation = 0) {
-  const banner = figlet.textSync("create LittleJS", { font: "Big" });
-  console.log();
-  if (variation === 0) {
-    console.log(gradient.pastel.multiline(banner));
-  } else if (variation === 1) {
-    cfonts.say("   js13k \nLittleJS", { font: "block", colors: ["yellow", "red", "blue"] });
-  }
+function showBanner() {
+  const width = process.stdout.columns || 80;
+  const minWidth = 80;
 
+  const fontSize = width < minWidth ? "tiny" : "block";
+
+  cfonts.say("   js13k \nLittleJS", {
+    font: fontSize,
+    colors: ["yellow", "red", "blue"],
+  });
   console.log(chalk.gray(pkg.version));
   console.log();
-  console.log(chalk.yellow('Batteries included starter template for JS13k jam using the LittleJS game engine.'));
+  console.log(
+    chalk.yellow(
+      "Batteries included starter template for JS13k jam using the LittleJS game engine.",
+    ),
+  );
   console.log(chalk.gray('-----------------------------------------------------------------------'));
   console.log();
 }
@@ -38,7 +41,7 @@ function showBanner(variation = 0) {
 async function main() {
   let tempTemplatePath;
   try {
-    showBanner(1);
+    showBanner();
 
     const { projectName, template, includeAI, runInstall } =
       await inquirer.prompt([

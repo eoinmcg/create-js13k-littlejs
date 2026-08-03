@@ -28,9 +28,7 @@
     "cfonts": "^3.3.1",
     "chalk": "^5.4.1",
     "degit": "^2.8.4",
-    "figlet": "^1.10.0",
     "fs-extra": "^11.3.0",
-    "gradient-string": "^3.0.0",
     "inquirer": "^12.8.2"
   }
 }
